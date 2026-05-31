@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>初練 WI 接待順位系統 2026年6月</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f2f0eb;--surface:#fff;--surface2:#faf9f7;
+  --border:#e4e1da;--border2:#ccc9c0;
+  --text:#181714;--text2:#5e5c55;--text3:#9c9a92;
+  --gold:#c9a030;--gold-bg:#fdf7e8;--gold-bd:#e8d490;
+  --silver:#7f95a6;--silver-bg:#eff3f6;--silver-bd:#bfcfd8;
+  --bronze:#a86c34;--bronze-bg:#fdf0e4;--bronze-bd:#e8be96;
+  --red:#d94040;--red-bg:#fef0f0;--red-bd:#f0b8b8;
+  --green:#2a7a50;--green-bg:#edf6f1;--green-bd:#9fd4bc;
+  --blue:#2d5fc4;--blue-bg:#edf2fc;--blue-bd:#9ab8e8;
+  --orange:#c97020;--orange-bg:#fef4e8;
+  --r:12px;--rsm:7px;--rxs:4px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+.loading-bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--orange),var(--gold));background-size:200%;position:fixed;top:0;left:0;right:0;z-index:999;display:none;animation:loadbar 1.2s ease infinite;}
+.loading-bar.show{display:block;}
+@keyframes loadbar{0%{background-position:0%}100%{background-position:200%}}
+
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;position:sticky;top:0;z-index:200;height:52px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.nav-brand{font-size:15px;font-weight:900;letter-spacing:.04em;padding-right:1.125rem;border-right:1px solid var(--border);margin-right:.875rem;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.nav-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;}
+.nav-tabs{display:flex;height:100%;}
+.nav-tab{display:flex;align-items:center;padding:0 .875rem;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;user-select:none;gap:5px;}
+.nav-tab:hover{color:var(--text);background:rgba(0,0,0,.02);}
+.nav-tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:.5rem;}
+.chip{font-size:11px;border-radius:20px;padding:3px 9px;white-space:nowrap;}
+.chip-ver{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);font-weight:600;}
+.chip-date{background:var(--bg);color:var(--text3);border:1px solid var(--border);font-family:'DM Mono',monospace;}
+.chip-live{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);font-weight:600;display:flex;align-items:center;gap:4px;}
+.chip-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);font-weight:600;}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.page{display:none;padding:1.25rem 1.5rem;max-width:980px;margin:0 auto;animation:fadeIn .18s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+.status-bar{border-radius:var(--rsm);padding:9px 13px;font-size:12px;display:flex;align-items:center;gap:8px;margin-bottom:.875rem;font-weight:500;}
+.st-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.st-err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);}
+.st-loading{background:var(--orange-bg);color:var(--orange);border:1px solid #e8c090;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.125rem 1.375rem;margin-bottom:.875rem;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+.card-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;margin-bottom:.875rem;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.875rem 1.125rem;box-shadow:var(--shadow);}
+.stat .lbl{font-size:10px;color:var(--text3);margin-bottom:.2rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.stat .val{font-size:22px;font-weight:700;color:var(--text);line-height:1.2;}
+.stat .val.sm{font-size:14px;font-weight:600;margin-top:3px;}
+.stat .sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace;}
+
+.mode-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;}
+.mode-may{background:var(--silver-bg);color:var(--silver);border:1px solid var(--silver-bd);}
+.mode-jun{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+
+.dpicker{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1.125rem;}
+.db{width:39px;height:45px;border:1px solid var(--border2);border-radius:var(--rsm);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:all .1s;}
+.db .wd{font-size:9px;color:var(--text3);font-weight:400;}
+.db:hover{border-color:var(--text);background:var(--bg);}
+.db.active{background:var(--text);color:#fff;border-color:var(--text);}
+.db.active .wd{color:rgba(255,255,255,.5);}
+.db.today{border-color:var(--blue);color:var(--blue);}
+.db.today.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+.db.today .wd{color:var(--blue);opacity:.7;}
+.db.has-off::after{content:'';position:absolute;bottom:3px;right:3px;width:4px;height:4px;border-radius:50%;background:var(--red);}
+.db.active.has-off::after{background:rgba(255,150,150,.8);}
+.db.we{color:var(--red);}
+.db.we .wd{color:var(--red);opacity:.6;}
+.db.active.we{background:var(--text);color:#fff;}
+
+.legend{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--text3);margin-bottom:.75rem;flex-wrap:wrap;}
+
+.rank-day-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:.875rem;display:flex;align-items:center;gap:8px;}
+.rank-day-title small{font-size:11px;color:var(--text3);font-weight:400;}
+
+.rank-list{display:flex;flex-direction:column;gap:4px;}
+.rrow{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);transition:box-shadow .1s;}
+.rrow:hover{box-shadow:var(--shadow);}
+.rrow.r1{background:var(--gold-bg);border-color:var(--gold-bd);}
+.rrow.r2{background:var(--silver-bg);border-color:var(--silver-bd);}
+.rrow.r3{background:var(--bronze-bg);border-color:var(--bronze-bd);}
+.rbadge{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--bg);color:var(--text2);border:1px solid var(--border);}
+.rb1{background:var(--gold-bg);color:var(--gold);border-color:var(--gold-bd);}
+.rb2{background:var(--silver-bg);color:var(--silver);border-color:var(--silver-bd);}
+.rb3{background:var(--bronze-bg);color:var(--bronze);border-color:var(--bronze-bd);}
+.rname{font-size:14px;font-weight:600;}
+.rname-zh{font-size:11px;color:var(--text3);margin-left:4px;font-weight:400;}
+.rscore{text-align:right;}
+.rscore .amt{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
+.rscore .lbl{font-size:10px;color:var(--text3);}
+.off-div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:7px 0 3px;border-top:1px dashed var(--border2);margin-top:5px;}
+.rrow-off{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:6px 14px;opacity:.33;}
+.off-pill{font-size:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);border-radius:20px;padding:1px 8px;font-weight:600;}
+.empty-st{padding:2.5rem;text-align:center;color:var(--text3);font-size:13px;}
+.empty-st .ico{font-size:28px;display:block;margin-bottom:.625rem;}
+.sync-info{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px;margin-top:.75rem;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.625rem;margin-bottom:.75rem;}
+.fg{display:flex;flex-direction:column;gap:3px;}
+.fg label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;}
+.fg input,.fg select{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--rsm);font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;transition:border-color .12s;}
+.fg input:focus,.fg select:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(24,23,20,.08);}
+.fg input::placeholder{color:var(--text3);}
+.btn{padding:8px 18px;border:1px solid var(--border2);border-radius:var(--rsm);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:5px;}
+.btn-primary{background:var(--text);color:#fff;border-color:var(--text);}
+.btn-primary:hover{opacity:.82;}
+.btn-ghost{background:transparent;color:var(--text2);}
+.btn-ghost:hover{background:var(--bg);}
+.btn-danger{background:var(--red-bg);color:var(--red);border-color:var(--red-bd);}
+.btn-danger:hover{background:var(--red);color:#fff;}
+.btn-sm{padding:4px 11px;font-size:11px;}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+
+table.dt{width:100%;border-collapse:collapse;font-size:13px;}
+table.dt th{text-align:left;padding:6px 9px;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap;}
+table.dt td{padding:8px 9px;border-bottom:1px solid var(--border);vertical-align:middle;}
+table.dt tr:last-child td{border-bottom:none;}
+table.dt tbody tr:hover td{background:var(--surface2);}
+
+.alert{padding:9px 13px;border-radius:var(--rsm);font-size:12px;font-weight:500;margin-bottom:.75rem;display:none;align-items:center;gap:7px;}
+.alert.show{display:flex;}
+.alert-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+
+.sch-outer{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.sch-t{border-collapse:collapse;font-size:11px;white-space:nowrap;}
+.sch-t th{padding:4px 3px;text-align:center;border:1px solid var(--border);background:var(--surface2);font-weight:600;color:var(--text2);min-width:30px;}
+.sch-t th.nc{text-align:left;min-width:96px;padding:4px 9px;}
+.sch-t th.weh{background:rgba(217,64,64,.06);color:var(--red);}
+.sch-t td{padding:2px;border:1px solid var(--border);text-align:center;}
+.sch-t td.nc{padding:5px 9px;text-align:left;font-weight:600;background:var(--surface2);position:sticky;left:0;z-index:1;border-right:2px solid var(--border2);}
+.sch-t td.wed{background:rgba(217,64,64,.03);}
+.sch-cell{width:26px;height:24px;border-radius:var(--rxs);border:1px solid var(--border2);background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--text3);transition:all .08s;margin:auto;}
+.sch-cell.off{background:var(--red-bg);border-color:var(--red);color:var(--red);}
+.sch-cell:hover{border-color:var(--text2);}
+.sch-cell.off:hover{background:var(--red);color:#fff;}
+
+@media(max-width:600px){
+  .page{padding:1rem;}
+  .nav{padding:0 1rem;}
+  .form-grid{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .chip-ver{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-bar" id="lb"></div>
+
+<nav class="nav">
+  <div class="nav-brand"><span class="dot"></span>初練 WI</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="nav('rank')">📊 接待順位</div>
+    <div class="nav-tab" onclick="nav('score')">💰 業績明細</div>
+    <div class="nav-tab" onclick="nav('schedule')">📅 休假設定</div>
+  </div>
+  <div class="nav-right">
+    <span class="chip chip-live" id="live-chip" style="display:none;"><span class="pulse"></span>即時</span>
+    <span class="chip chip-err" id="err-chip" style="display:none;">⚠ 離線</span>
+    <span class="chip chip-ver">2026年6月</span>
+    <span class="chip chip-date" id="nav-date">—</span>
+  </div>
+</nav>
+
+<!-- RANK -->
+<div class="page active" id="page-rank">
+  <div id="rank-st"></div>
+  <div class="stats-grid" id="stats"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📅 日期選擇</div>
+      <span class="mode-badge mode-may" id="mode-badge">依5月業績排序</span>
+    </div>
+    <div class="legend">
+      <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:middle;"></span>當日有人休假</span>
+      <span style="border:1px solid var(--blue);color:var(--blue);border-radius:3px;padding:1px 6px;font-size:10px;font-weight:600;">今天</span>
+      <span style="color:var(--red);font-size:11px;">紅字 = 週末</span>
+    </div>
+    <div class="dpicker" id="dpicker"></div>
+    <div class="rank-day-title" id="rank-title">—</div>
+    <div class="rank-list" id="rank-list"></div>
+    <div class="sync-info" id="sync-info"></div>
+  </div>
+</div>
+
+<!-- SCORE -->
+<div class="page" id="page-score">
+  <div id="score-st"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📋 6月業績（Google Sheets 即時）</div>
+      <button class="btn btn-ghost btn-sm" onclick="fetchAll()">🔄 重新整理</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="dt">
+        <thead><tr><th>日期</th><th>教練</th><th>會員</th><th>金額</th></tr></thead>
+        <tbody id="score-body"><tr><td colspan="4" style="text-align:center;color:var(--text3);padding:2rem;">讀取中…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:.875rem;">📌 6月累計業績排名</div>
+    <table class="dt"><thead><tr><th>#</th><th>教練</th><th>6月累計</th><th>5月基準</th></tr></thead><tbody id="summary-body"></tbody></table>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div class="page" id="page-schedule">
+  <div class="alert alert-ok" id="sch-alert">✅ 已儲存本機備用</div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📅 6月休假（自動從班表讀取）</div>
+      <div class="btn-row">
+        <button class="btn btn-ghost btn-sm" onclick="fetchAll()">🔄 重新整理</button>
+        <button class="btn btn-primary btn-sm" onclick="saveSchedule()">💾 儲存備用</button>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--text3);margin-bottom:.75rem;">點格子可手動補正，儲存後保留。班表 Sheets 更新後按「重新整理」同步。</p>
+    <div class="sch-outer"><div id="sch-wrap"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="margin-bottom:.75rem;">⚡ 批次手動設定</div>
+    <div class="form-grid">
+      <div class="fg"><label>教練</label><select id="b-coach"></select></div>
+      <div class="fg"><label>休假日（逗號分隔）</label><input type="text" id="b-days" placeholder="1,7,14,21,28"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="batchSet()">套用</button>
+      <button class="btn btn-ghost" onclick="batchClear()">清除該教練</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ CONFIG ═══
+var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6MqjtTQpbRcIjL4e4llAlB8yIodl3gDgr0osO1GlW_rk05DfXcRmZvcW2nXQNCTm9ew/exec';
+var SHEET_SCORE_ID  = '1e9cRYnZiNqp584y7MCvNN1U-n7pjaE3SPPk3SGDPDJQ';
+
+var MAY_BASE = {
+  Peggy:458556, Trevor:342456, Manson:341064, Jim:314952,
+  Kenny:243648, Alan:230904, Jon:193904, Eason:136848,
+  Ian:130992, Parker:76224, Shawn:75624, Ann:0
+};
+var COACHES = [
+  {name:'Peggy',zh:'呂佩儀'},{name:'Trevor',zh:'黃任桂'},
+  {name:'Manson',zh:'許銘晨'},{name:'Jim',zh:'李宥昇'},
+  {name:'Kenny',zh:'楊育勝'},{name:'Alan',zh:'游子昇'},
+  {name:'Jon',zh:'巫承澤'},{name:'Eason',zh:'許哲軒'},
+  {name:'Ian',zh:'林彥廷'},{name:'Parker',zh:'戴璟佑'},
+  {name:'Shawn',zh:'張梓祥'},{name:'Ann',zh:'邱子晏'}
+];
+var CNAMES = COACHES.map(function(c){return c.name;});
+var WD6 = ['一','二','三','四','五','六','日'];
+var FIRST6 = new Date(2026,5,1).getDay();
+var KEY_SCH = 'wi26jun_sch_v4';
+
+var schedule  = {};
+var junScores = {};
+var junEntries= [];
+var lastSync  = null;
+var selDay = (function(){
+  var t = new Date();
+  return (t.getMonth()===5 && t.getFullYear()===2026) ? t.getDate() : 1;
+})();
+
+// ═══ CSV PARSER ═══
+function parseCSV(text) {
+  var rows = [], lines = text.split('\n');
+  for (var li = 0; li < lines.length; li++) {
+    var line = lines[li], row = [], inQ = false, cur = '';
+    for (var i = 0; i < line.length; i++) {
+      var ch = line[i];
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === ',' && !inQ) { row.push(cur.trim()); cur = ''; }
+      else { cur += ch; }
+    }
+    row.push(cur.trim());
+    rows.push(row);
+  }
+  return rows;
+}
+
+// ═══ FETCH SCORES (Google Sheets CSV) ═══
+function fetchScores() {
+  var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_SCORE_ID + '/gviz/tq?tqx=out:csv&sheet=2026';
+  return fetch(url).then(function(r){
+    if (!r.ok) throw new Error('業績表 ' + r.status);
+    return r.text();
+  }).then(function(text){
+    var rows = parseCSV(text);
+    var entries = [], scores = {};
+    CNAMES.forEach(function(n){ scores[n] = 0; });
+    for (var i = 2; i < rows.length; i++) {
+      var row = rows[i];
+      var dateStr = (row[0]||'').trim();
+      var amtStr  = (row[5]||'').replace(/[^0-9]/g,'');
+      var coachP  = (row[15]||'').trim();
+      var member  = (row[1]||'').trim();
+      if (!dateStr.startsWith('06/')) continue;
+      var day   = parseInt(dateStr.split('/')[1]);
+      var amt   = parseInt(amtStr);
+      var coach = null;
+      for (var k = 0; k < CNAMES.length; k++) {
+        if (coachP === CNAMES[k] || coachP.indexOf(CNAMES[k]) === 0) { coach = CNAMES[k]; break; }
+      }
+      if (!coach || isNaN(day) || isNaN(amt) || amt <= 0) continue;
+      entries.push({day:day, coach:coach, member:member, amount:amt});
+      scores[coach] = (scores[coach]||0) + amt;
+    }
+    junEntries = entries.sort(function(a,b){return a.day-b.day;});
+    junScores  = scores;
+  });
+}
+
+// ═══ FETCH SCHEDULE (Apps Script) ═══
+function fetchSchedule() {
+  return fetch(APPS_SCRIPT_URL).then(function(r){
+    if (!r.ok) throw new Error('班表 API ' + r.status);
+    return r.json();
+  }).then(function(json){
+    if (!json.ok) throw new Error('班表解析失敗');
+    // 把 key 轉成數字
+    var sch = {};
+    for (var d = 1; d <= 30; d++) sch[d] = [];
+    for (var key in json.schedule) {
+      var day = parseInt(key);
+      if (day >= 1 && day <= 30) sch[day] = json.schedule[key];
+    }
+    schedule = sch;
+    try { localStorage.setItem(KEY_SCH, JSON.stringify(sch)); } catch(e){}
+  });
+}
+
+// ═══ MAIN FETCH ═══
+function fetchAll() {
+  showLoading(true);
+  setSt('rank-st','loading','🔄 正在從 Google Sheets 讀取最新資料...');
+  setSt('score-st','loading','🔄 讀取中...');
+
+  var p1 = fetchScores().then(function(){ return 'ok'; }).catch(function(e){ return 'err:'+e.message; });
+  var p2 = fetchSchedule().then(function(){ return 'ok'; }).catch(function(e){
+    // 嘗試本機備份
+    try {
+      var s = localStorage.getItem(KEY_SCH);
+      if (s) { schedule = JSON.parse(s); return 'local'; }
+    } catch(ex){}
+    return 'err:'+e.message;
+  });
+
+  Promise.all([p1, p2]).then(function(results){
+    showLoading(false);
+    lastSync = new Date();
+    var s1 = results[0], s2 = results[1];
+    var allOk = s1==='ok' && s2==='ok';
+    var anyOk = s1==='ok' || s2==='ok' || s2==='local';
+
+    if (allOk) {
+      setSt('rank-st','ok','✅ 資料已更新｜業績 '+junEntries.length+' 筆｜班表已同步');
+      setSt('score-st','ok','✅ 業績資料已從 Google Sheets 讀取');
+      document.getElementById('live-chip').style.display='flex';
+      document.getElementById('err-chip').style.display='none';
+    } else if (s2==='local') {
+      setSt('rank-st','err','⚠ 班表使用本機備用資料（'+s1+'）');
+      document.getElementById('err-chip').style.display='flex';
+    } else {
+      setSt('rank-st','err','❌ 讀取失敗：'+results.join(' / '));
+      document.getElementById('err-chip').style.display='flex';
+    }
+
+    document.getElementById('sync-info').innerHTML =
+      '🕐 最後同步：' + lastSync.toLocaleTimeString('zh-TW');
+
+    buildPicker();
+    renderDay(selDay);
+    if (document.getElementById('page-score').classList.contains('active')) renderScorePage();
+    if (document.getElementById('page-schedule').classList.contains('active')) renderSchGrid();
+  });
+}
+
+function showLoading(on) {
+  document.getElementById('lb').classList.toggle('show', on);
+}
+function setSt(id, type, msg) {
+  var el = document.getElementById(id); if (!el) return;
+  var cls = type==='ok'?'st-ok':type==='err'?'st-err':'st-loading';
+  el.innerHTML = '<div class="status-bar '+cls+'">'+msg+'</div>';
+}
+
+// ═══ NAV ═══
+function nav(p) {
+  document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(el){el.classList.remove('active');});
+  document.getElementById('page-'+p).classList.add('active');
+  var idx = {rank:0,score:1,schedule:2}[p];
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+  if (p==='score') renderScorePage();
+  if (p==='schedule') renderSchGrid();
+}
+
+// ═══ RANK ═══
+function getScore(name, day) {
+  return day===1 ? (MAY_BASE[name]||0) : (junScores[name]||0);
+}
+function getRanking(day) {
+  return COACHES
+    .filter(function(c){ return !(c.name==='Ann' && day<13); })
+    .map(function(c){
+      return {name:c.name, zh:c.zh, score:getScore(c.name,day), isOff:(schedule[day]||[]).indexOf(c.name)>=0};
+    })
+    .sort(function(a,b){return b.score-a.score;});
+}
+
+function buildPicker() {
+  var el = document.getElementById('dpicker'); el.innerHTML='';
+  var today = new Date();
+  for (var d=1; d<=30; d++) {
+    var dow = (FIRST6+d-1)%7;
+    var isWe = dow>=5;
+    var off  = (schedule[d]||[]).length;
+    var isToday = today.getMonth()===5 && today.getFullYear()===2026 && today.getDate()===d;
+    var btn = document.createElement('button');
+    var cls = 'db';
+    if (d===selDay) cls+=' active';
+    if (isToday)   cls+=' today';
+    if (off>0)     cls+=' has-off';
+    if (isWe)      cls+=' we';
+    btn.className = cls;
+    btn.innerHTML = '<span class="wd">'+WD6[dow]+'</span>'+d;
+    btn.title = off>0 ? '休假：'+(schedule[d]||[]).join('、') : '';
+    (function(dd,b){
+      b.onclick = function(){
+        selDay=dd;
+        document.querySelectorAll('.db').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        renderDay(dd);
+      };
+    })(d,btn);
+    el.appendChild(btn);
+  }
+}
+
+function renderDay(d) {
+  var rank = getRanking(d);
+  var on   = rank.filter(function(c){return !c.isOff;});
+  var off  = rank.filter(function(c){return c.isOff;});
+  var isD1 = d===1;
+  var dow  = WD6[(FIRST6+d-1)%7];
+
+  document.getElementById('mode-badge').textContent = isD1?'依5月業績排序':'依6月累計排序';
+  document.getElementById('mode-badge').className   = 'mode-badge '+(isD1?'mode-may':'mode-jun');
+  document.getElementById('rank-title').innerHTML   =
+    '6月'+d+'日（週'+dow+'）<small>'+(isD1?'6/1以5月累計為基準':'依本月累計即時排序')+'</small>';
+
+  var top = on[0];
+  document.getElementById('stats').innerHTML =
+    '<div class="stat"><div class="lbl">今日出勤</div><div class="val">'+on.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
+    '<div class="stat"><div class="lbl">今日休假</div><div class="val">'+off.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
+    '<div class="stat"><div class="lbl">第一順位</div><div class="val sm">'+(top?top.name+' '+top.zh:'—')+'</div>'+(top?'<div class="sub">'+(isD1?'5月':'6月')+'累計 '+getScore(top.name,d).toLocaleString()+' 元</div>':'')+'</div>';
+
+  var el = document.getElementById('rank-list'); el.innerHTML='';
+  if (!on.length) {
+    el.innerHTML='<div class="empty-st"><span class="ico">🌙</span>本日全員休假</div>';
+  } else {
+    on.forEach(function(c,i){
+      var r=i+1, gc=r===1?' r1':r===2?' r2':r===3?' r3':'', bc=r===1?' rb1':r===2?' rb2':r===3?' rb3':'';
+      var medal=r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
+      var row=document.createElement('div'); row.className='rrow'+gc;
+      row.innerHTML='<div class="rbadge'+bc+'">'+medal+'</div>'+
+        '<div><span class="rname">'+c.name+'</span><span class="rname-zh">'+c.zh+'</span></div>'+
+        '<div class="rscore"><div class="amt">'+c.score.toLocaleString()+'</div><div class="lbl">'+(isD1?'5月累計':'6月累計')+'</div></div>';
+      el.appendChild(row);
+    });
+  }
+  if (off.length) {
+    var sep=document.createElement('div'); sep.className='off-div';
+    sep.innerHTML='🌙 本日休假（不排入 WI 接待順位）'; el.appendChild(sep);
+    off.forEach(function(c){
+      var row=document.createElement('div'); row.className='rrow-off';
+      row.innerHTML='<div class="rbadge">—</div><div><span class="rname">'+c.name+'</span><span class="rname-zh">'+c.zh+'</span></div><span class="off-pill">休假</span>';
+      el.appendChild(row);
+    });
+  }
+}
+
+// ═══ SCORE PAGE ═══
+function renderScorePage() {
+  var tbody=document.getElementById('score-body'); tbody.innerHTML='';
+  if (!junEntries.length) {
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:2rem;">尚無6月業績 / 讀取中</td></tr>';
+  } else {
+    junEntries.forEach(function(e){
+      var c=COACHES.find(function(x){return x.name===e.coach;})||{zh:''};
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td style="font-family:\'DM Mono\',monospace;font-size:12px;">6/'+e.day+'</td>'+
+        '<td><strong>'+e.coach+'</strong> <small style="color:var(--text3);">'+c.zh+'</small></td>'+
+        '<td style="color:var(--text3);font-size:12px;">'+(e.member||'—')+'</td>'+
+        '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+e.amount.toLocaleString()+'</td>';
+      tbody.appendChild(tr);
+    });
+  }
+  var sby=document.getElementById('summary-body'); sby.innerHTML='';
+  var sorted=COACHES.filter(function(c){return c.name!=='Ann'||(junScores['Ann']||0)>0;})
+    .map(function(c){return {name:c.name,zh:c.zh,jun:junScores[c.name]||0,may:MAY_BASE[c.name]||0};})
+    .sort(function(a,b){return b.jun-a.jun;});
+  sorted.forEach(function(c,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><strong>'+(i+1)+'</strong></td>'+
+      '<td><strong>'+c.name+'</strong> <small style="color:var(--text3);">'+c.zh+'</small></td>'+
+      '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+c.jun.toLocaleString()+' <small style="color:var(--text3);">元</small></td>'+
+      '<td style="font-family:\'DM Mono\',monospace;color:var(--text3);">'+c.may.toLocaleString()+'</td>';
+    sby.appendChild(tr);
+  });
+}
+
+// ═══ SCHEDULE PAGE ═══
+function populateSel(id) {
+  document.getElementById(id).innerHTML=COACHES.map(function(c){
+    return '<option value="'+c.name+'">'+c.name+' '+c.zh+'</option>';
+  }).join('');
+}
+function renderSchGrid() {
+  var wrap=document.getElementById('sch-wrap'), html='<table class="sch-t"><thead><tr><th class="nc">教練</th>';
+  for (var d=1;d<=30;d++){
+    var dow=(FIRST6+d-1)%7, isWe=dow>=5;
+    html+='<th class="'+(isWe?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>';
+  }
+  html+='</tr></thead><tbody>';
+  COACHES.forEach(function(c){
+    html+='<tr><td class="nc">'+c.name+'<br><small style="color:var(--text3);font-weight:400;">'+c.zh+'</small></td>';
+    for (var d=1;d<=30;d++){
+      var dow=(FIRST6+d-1)%7, isWe=dow>=5, nj=c.name==='Ann'&&d<13, isOff=(schedule[d]||[]).indexOf(c.name)>=0;
+      html+='<td class="'+(isWe?'wed':'')+'"><div class="sch-cell'+(isOff?' off':'')+(nj?' disabled':'')+'" '+(nj?'style="opacity:.15;cursor:default;background:var(--bg);"':'')+' id="sc-'+c.name+'-'+d+'" '+(nj?'':' onclick="toggleCell(\''+c.name+'\','+d+')"')+'>'+(isOff?'休':'')+'</div></td>';
+    }
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+function toggleCell(name,d){
+  if (!schedule[d]) schedule[d]=[];
+  var idx=schedule[d].indexOf(name);
+  if (idx>=0) schedule[d].splice(idx,1); else schedule[d].push(name);
+  var cell=document.getElementById('sc-'+name+'-'+d);
+  var isOff=schedule[d].indexOf(name)>=0;
+  cell.className='sch-cell'+(isOff?' off':'');
+  cell.textContent=isOff?'休':'';
+}
+function saveSchedule(){
+  try{localStorage.setItem(KEY_SCH,JSON.stringify(schedule));}catch(e){}
+  buildPicker(); renderDay(selDay);
+  var al=document.getElementById('sch-alert'); al.classList.add('show');
+  setTimeout(function(){al.classList.remove('show');},2500);
+}
+function batchSet(){
+  var name=document.getElementById('b-coach').value;
+  var raw=document.getElementById('b-days').value;
+  var days=raw.split(',').map(function(s){return parseInt(s.trim());}).filter(function(d){return d>=1&&d<=30;});
+  days.forEach(function(d){if(!schedule[d])schedule[d]=[];if(schedule[d].indexOf(name)<0)schedule[d].push(name);});
+  document.getElementById('b-days').value='';
+  renderSchGrid();
+}
+function batchClear(){
+  var name=document.getElementById('b-coach').value;
+  for(var d=1;d<=30;d++) if(schedule[d]) schedule[d]=schedule[d].filter(function(n){return n!==name;});
+  renderSchGrid();
+}
+
+// ═══ INIT ═══
+function init(){
+  var now=new Date();
+  document.getElementById('nav-date').textContent=
+    now.getFullYear()+'/'+(now.getMonth()+1+'').padStart(2,'0')+'/'+(now.getDate()+'').padStart(2,'0');
+  // 先載入本機備份
+  try{ var s=localStorage.getItem(KEY_SCH); if(s) schedule=JSON.parse(s); }catch(e){}
+  populateSel('b-coach');
+  buildPicker();
+  renderDay(selDay);
+  // 再抓最新
+  fetchAll();
+  // 每5分鐘自動更新
+  setInterval(fetchAll, 5*60*1000);
+}
+init();
+</script>
+</body>
+</html>
