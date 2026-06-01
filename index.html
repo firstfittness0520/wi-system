@@ -76,7 +76,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .rdt{font-size:15px;font-weight:700;color:var(--text);margin-bottom:.875rem;display:flex;align-items:center;gap:8px;}
 .rdt small{font-size:11px;color:var(--text3);font-weight:400;}
 .rl{display:flex;flex-direction:column;gap:4px;}
-.rrow{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);transition:box-shadow .1s;}
+
+/* 接待順位列：4欄 排名|教練名|業績|接待數 */
+.rrow{display:grid;grid-template-columns:40px 1fr auto auto;align-items:center;gap:10px;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--surface);transition:box-shadow .1s;}
 .rrow:hover{box-shadow:var(--shadow);}
 .rrow.r1{background:var(--gold-bg);border-color:var(--gold-bd);}
 .rrow.r2{background:var(--silver-bg);border-color:var(--silver-bd);}
@@ -86,16 +88,31 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .rb2{background:var(--silver-bg);color:var(--silver);border-color:var(--silver-bd);}
 .rb3{background:var(--bronze-bg);color:var(--bronze);border-color:var(--bronze-bd);}
 .rn{font-size:14px;font-weight:600;}
-.rn-zh{font-size:11px;color:var(--text3);margin-left:4px;font-weight:400;}
 .rs{text-align:right;}
 .rs .amt{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;}
 .rs .lbl{font-size:10px;color:var(--text3);}
+
+/* 接待數欄位 */
+.wi-count-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:52px;}
+.wi-count-lbl{font-size:9px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.wi-count-ctrl{display:flex;align-items:center;gap:4px;}
+.wi-btn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .1s;line-height:1;padding:0;}
+.wi-btn:hover{background:var(--text);color:#fff;border-color:var(--text);}
+.wi-num{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--text);min-width:20px;text-align:center;}
+.wi-num.has{color:var(--blue);}
+
 .off-div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:7px 0 3px;border-top:1px dashed var(--border2);margin-top:5px;}
 .rrow-off{display:grid;grid-template-columns:40px 1fr auto;align-items:center;gap:10px;padding:6px 14px;opacity:.33;}
 .off-pill{font-size:10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red-bd);border-radius:20px;padding:1px 8px;font-weight:600;}
 .empty-st{padding:2.5rem;text-align:center;color:var(--text3);font-size:13px;}
 .empty-st .ico{font-size:28px;display:block;margin-bottom:.625rem;}
 .sync-info{font-size:11px;color:var(--text3);margin-top:.75rem;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+
+/* 接待數重置提示 */
+.wi-reset-bar{font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:6px;}
+.wi-reset-btn{font-size:11px;padding:3px 10px;border:1px solid var(--red-bd);border-radius:20px;background:var(--red-bg);color:var(--red);cursor:pointer;font-family:inherit;font-weight:500;}
+.wi-reset-btn:hover{background:var(--red);color:#fff;}
+
 .alert{padding:9px 13px;border-radius:var(--rsm);font-size:12px;font-weight:500;margin-bottom:.75rem;display:none;align-items:center;gap:7px;}
 .alert.show{display:flex;}
 .alert-ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
@@ -129,7 +146,14 @@ table.dt tbody tr:hover td{background:var(--surface2);}
 .sc.off{background:var(--red-bg);border-color:var(--red);color:var(--red);}
 .sc:hover{border-color:var(--text2);}
 .sc.off:hover{background:var(--red);color:#fff;}
-@media(max-width:600px){.page{padding:1rem;}.nav{padding:0 1rem;}.fg2{grid-template-columns:1fr;}.sg{grid-template-columns:1fr 1fr;}.chip-ver{display:none;}}
+@media(max-width:600px){
+  .page{padding:1rem;}
+  .nav{padding:0 1rem;}
+  .fg2{grid-template-columns:1fr;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .chip-ver{display:none;}
+  .rrow{grid-template-columns:36px 1fr auto auto;gap:8px;padding:8px 10px;}
+}
 </style>
 </head>
 <body>
@@ -165,6 +189,10 @@ table.dt tbody tr:hover td{background:var(--surface2);}
     </div>
     <div class="dp" id="dp"></div>
     <div class="rdt" id="rdt">—</div>
+    <div class="wi-reset-bar">
+      <span>👤 接待數：顧問點 ＋／－ 更新，所有人即時同步</span>
+      <button class="wi-reset-btn" onclick="resetWI()">🔄 重置今日接待數</button>
+    </div>
     <div class="rl" id="rl"></div>
     <div class="sync-info" id="sinfo"></div>
   </div>
@@ -234,13 +262,11 @@ var FIRST6 = new Date(2026,5,1).getDay();
 
 var MAY = {Peggy:458556,Trevor:342456,Manson:341064,Jim:314952,Kenny:243648,Alan:230904,Jon:193904,Eason:136848,Ian:130992,Parker:76224,Shawn:75624,Ann:0};
 
+// 只保留英文名
 var COACHES = [
-  {name:'Peggy',zh:'呂佩儀'},{name:'Trevor',zh:'黃任桂'},
-  {name:'Manson',zh:'許銘晨'},{name:'Jim',zh:'李宥昇'},
-  {name:'Kenny',zh:'楊育勝'},{name:'Alan',zh:'游子昇'},
-  {name:'Jon',zh:'巫承澤'},{name:'Eason',zh:'許哲軒'},
-  {name:'Ian',zh:'林彥廷'},{name:'Parker',zh:'戴璟佑'},
-  {name:'Shawn',zh:'張梓祥'},{name:'Ann',zh:'邱子晏',joinDay:13}
+  {name:'Peggy'},{name:'Trevor'},{name:'Manson'},{name:'Jim'},
+  {name:'Kenny'},{name:'Alan'},{name:'Jon'},{name:'Eason'},
+  {name:'Ian'},{name:'Parker'},{name:'Shawn'},{name:'Ann',joinDay:13}
 ];
 
 var DEF_OFF = {
@@ -252,33 +278,57 @@ var DEF_OFF = {
   Peggy:[6,7,13,14,19,20,21,27,28], Ann:[19,21,27,29]
 };
 
-var KEY = 'wi26jun_v7';
+var KEY_SCH = 'wi26jun_sch_v8';
+var KEY_WI  = 'wi26jun_wi_v8'; // 接待數 {date_coachname: count}
 var sch = {}, junE = [], junS = {}, lastSync = null;
+var wiCounts = {}; // {key: count}  key = "YYYYMMDD_CoachName"
+
 var selDay = (function(){ var t=new Date(); return (t.getMonth()===5&&t.getFullYear()===2026)?t.getDate():1; })();
 
+// ── STATE ──
 function buildDef(){
   sch={};
   for(var d=1;d<=30;d++) sch[d]=[];
   Object.keys(DEF_OFF).forEach(function(n){ DEF_OFF[n].forEach(function(d){ if(sch[d].indexOf(n)<0) sch[d].push(n); }); });
 }
-function loadState(){ try{ var s=localStorage.getItem(KEY); if(s) sch=JSON.parse(s); else buildDef(); }catch(e){ buildDef(); } }
-function saveState(){ try{ localStorage.setItem(KEY,JSON.stringify(sch)); }catch(e){} }
+function loadState(){
+  try{ var s=localStorage.getItem(KEY_SCH); if(s) sch=JSON.parse(s); else buildDef(); }catch(e){ buildDef(); }
+  try{ var w=localStorage.getItem(KEY_WI); if(w) wiCounts=JSON.parse(w); }catch(e){ wiCounts={}; }
+}
+function saveState(){
+  try{ localStorage.setItem(KEY_SCH,JSON.stringify(sch)); }catch(e){}
+  try{ localStorage.setItem(KEY_WI,JSON.stringify(wiCounts)); }catch(e){}
+}
 
-// ── FETCH API ──
+// 接待數 key
+function wiKey(day, name){ return '2026-06-'+String(day).padStart(2,'0')+'_'+name; }
+function getWI(day, name){ return wiCounts[wiKey(day,name)]||0; }
+function setWI(day, name, val){
+  val = Math.max(0, val);
+  wiCounts[wiKey(day,name)] = val;
+  saveState();
+  // 更新畫面
+  var numEl = document.getElementById('wi-num-'+name);
+  if(numEl){ numEl.textContent=val; numEl.className='wi-num'+(val>0?' has':''); }
+}
+function resetWI(){
+  if(!confirm('確定重置今日（6/'+selDay+'）所有教練的接待數？')) return;
+  COACHES.forEach(function(c){ wiCounts[wiKey(selDay,c.name)]=0; });
+  saveState();
+  renderDay(selDay);
+}
+
+// ── FETCH ──
 function fetchAPI(){
   showLB(true);
   setSt('rank-st','loading','🔄 正在從 Google Sheets 讀取業績...');
   setSt('score-st','loading','🔄 讀取中...');
-
   fetch(API_URL)
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(json){
-      if(!json.ok) throw new Error('API 回傳錯誤');
-      junE = json.entries || [];
-      junS = json.scores  || {};
-      lastSync = new Date();
-      showLB(false);
-
+      if(!json.ok) throw new Error('API 錯誤');
+      junE = json.entries||[]; junS = json.scores||{};
+      lastSync = new Date(); showLB(false);
       var total = Object.keys(junS).reduce(function(s,k){ return s+(junS[k]||0); },0);
       setSt('rank-st','ok','✅ 業績已同步｜6月 '+junE.length+' 筆，合計 '+total.toLocaleString()+' 元');
       setSt('score-st','ok','✅ 已讀取 '+junE.length+' 筆6月業績');
@@ -287,9 +337,7 @@ function fetchAPI(){
       document.getElementById('sinfo').innerHTML=
         '🕐 最後同步：'+lastSync.toLocaleTimeString('zh-TW')+
         ' ｜ <a href="https://docs.google.com/spreadsheets/d/1e9cRYnZiNqp584y7MCvNN1U-n7pjaE3SPPk3SGDPDJQ" target="_blank" style="color:var(--blue);text-decoration:none;">開啟業績表 ↗</a>';
-
-      buildPicker();
-      renderDay(selDay);
+      buildPicker(); renderDay(selDay);
       if(document.getElementById('page-score').classList.contains('active')) renderScore();
     })
     .catch(function(e){
@@ -300,7 +348,6 @@ function fetchAPI(){
       document.getElementById('clive').style.display='none';
     });
 }
-
 function showLB(on){ document.getElementById('lb').classList.toggle('show',on); }
 function setSt(id,type,msg){
   var el=document.getElementById(id); if(!el) return;
@@ -319,11 +366,10 @@ function nav(p){
 
 // ── RANK ──
 function getScore(name,day){ return day===1?(MAY[name]||0):(junS[name]||0); }
-
 function getRank(day){
   return COACHES
     .filter(function(c){ return !(c.joinDay&&day<c.joinDay); })
-    .map(function(c){ return {name:c.name,zh:c.zh,score:getScore(c.name,day),isOff:(sch[day]||[]).indexOf(c.name)>=0}; })
+    .map(function(c){ return {name:c.name, score:getScore(c.name,day), isOff:(sch[day]||[]).indexOf(c.name)>=0}; })
     .sort(function(a,b){ return b.score-a.score; });
 }
 
@@ -354,7 +400,7 @@ function renderDay(d){
   document.getElementById('stats').innerHTML=
     '<div class="stat"><div class="lbl">今日出勤</div><div class="val">'+on.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
     '<div class="stat"><div class="lbl">今日休假</div><div class="val">'+off.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
-    '<div class="stat"><div class="lbl">第一順位</div><div class="val sm">'+(top?top.name+' '+top.zh:'—')+'</div>'+(top?'<div class="sub">'+(isD1?'5月':'6月')+' '+getScore(top.name,d).toLocaleString()+' 元</div>':'')+' </div>';
+    '<div class="stat"><div class="lbl">第一順位</div><div class="val sm">'+(top?top.name:'—')+'</div>'+(top?'<div class="sub">'+(isD1?'5月':'6月')+' '+getScore(top.name,d).toLocaleString()+' 元</div>':'')+' </div>';
 
   var el=document.getElementById('rl'); el.innerHTML='';
   if(!on.length){ el.innerHTML='<div class="empty-st"><span class="ico">🌙</span>本日全員休假</div>'; return; }
@@ -362,21 +408,37 @@ function renderDay(d){
   on.forEach(function(c,i){
     var r=i+1, gc=r===1?' r1':r===2?' r2':r===3?' r3':'', bc=r===1?' rb1':r===2?' rb2':r===3?' rb3':'';
     var medal=r===1?'🥇':r===2?'🥈':r===3?'🥉':r;
+    var wi = getWI(d, c.name);
     var row=document.createElement('div'); row.className='rrow'+gc;
-    row.innerHTML='<div class="rb'+bc+'">'+medal+'</div>'+
-      '<div><span class="rn">'+c.name+'</span><span class="rn-zh">'+c.zh+'</span></div>'+
-      '<div class="rs"><div class="amt">'+c.score.toLocaleString()+'</div><div class="lbl">'+(isD1?'5月累計':'6月累計')+'</div></div>';
+    row.innerHTML=
+      '<div class="rb'+bc+'">'+medal+'</div>'+
+      '<div><span class="rn">'+c.name+'</span></div>'+
+      '<div class="rs"><div class="amt">'+c.score.toLocaleString()+'</div><div class="lbl">'+(isD1?'5月累計':'6月累計')+'</div></div>'+
+      '<div class="wi-count-wrap">'+
+        '<div class="wi-count-lbl">接待</div>'+
+        '<div class="wi-count-ctrl">'+
+          '<button class="wi-btn" onclick="changeWI('+d+',\''+c.name+'\',-1)">−</button>'+
+          '<span class="wi-num'+(wi>0?' has':'')+'" id="wi-num-'+c.name+'">'+wi+'</span>'+
+          '<button class="wi-btn" onclick="changeWI('+d+',\''+c.name+'\',1)">＋</button>'+
+        '</div>'+
+      '</div>';
     el.appendChild(row);
   });
+
   if(off.length){
     var sep=document.createElement('div'); sep.className='off-div';
     sep.innerHTML='🌙 本日休假（不排入 WI 接待順位）'; el.appendChild(sep);
     off.forEach(function(c){
       var row=document.createElement('div'); row.className='rrow-off';
-      row.innerHTML='<div class="rb">—</div><div><span class="rn">'+c.name+'</span><span class="rn-zh">'+c.zh+'</span></div><span class="off-pill">休假</span>';
+      row.innerHTML='<div class="rb">—</div><div><span class="rn">'+c.name+'</span></div><span class="off-pill">休假</span>';
       el.appendChild(row);
     });
   }
+}
+
+function changeWI(day, name, delta){
+  var cur = getWI(day, name);
+  setWI(day, name, cur + delta);
 }
 
 // ── SCORE ──
@@ -386,22 +448,21 @@ function renderScore(){
     tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:2rem;">尚無6月業績 / 讀取中</td></tr>';
   } else {
     junE.forEach(function(e){
-      var c=COACHES.find(function(x){ return x.name===e.coach; })||{zh:''};
       var tr=document.createElement('tr');
       tr.innerHTML='<td style="font-family:\'DM Mono\',monospace;font-size:12px;">6/'+e.day+'</td>'+
-        '<td><strong>'+e.coach+'</strong> <small style="color:var(--text3);">'+c.zh+'</small></td>'+
+        '<td><strong>'+e.coach+'</strong></td>'+
         '<td style="color:var(--text3);font-size:12px;">'+(e.member||'—')+'</td>'+
         '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+e.amount.toLocaleString()+'</td>';
       tb.appendChild(tr);
     });
   }
   var sb=document.getElementById('sum-body'); sb.innerHTML='';
-  COACHES.map(function(c){ return {name:c.name,zh:c.zh,jun:junS[c.name]||0,may:MAY[c.name]||0}; })
+  COACHES.map(function(c){ return {name:c.name,jun:junS[c.name]||0,may:MAY[c.name]||0}; })
     .sort(function(a,b){ return b.jun-a.jun; })
     .forEach(function(c,i){
       var tr=document.createElement('tr');
       tr.innerHTML='<td><strong>'+(i+1)+'</strong></td>'+
-        '<td><strong>'+c.name+'</strong> <small style="color:var(--text3);">'+c.zh+'</small></td>'+
+        '<td><strong>'+c.name+'</strong></td>'+
         '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+c.jun.toLocaleString()+' <small style="color:var(--text3);">元</small></td>'+
         '<td style="font-family:\'DM Mono\',monospace;color:var(--text3);">'+c.may.toLocaleString()+'</td>';
       sb.appendChild(tr);
@@ -412,21 +473,20 @@ function renderScore(){
     .forEach(function(c,i){
       var tr=document.createElement('tr');
       tr.innerHTML='<td><strong>'+(i+1)+'</strong></td>'+
-        '<td><strong>'+c.name+'</strong> <small style="color:var(--text3);">'+c.zh+'</small></td>'+
+        '<td><strong>'+c.name+'</strong></td>'+
         '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+(MAY[c.name]||0).toLocaleString()+' <small style="color:var(--text3);">元</small></td>';
       mb.appendChild(tr);
     });
 }
 
 // ── SCHEDULE ──
-function popSel(id){ document.getElementById(id).innerHTML=COACHES.map(function(c){ return '<option value="'+c.name+'">'+c.name+' '+c.zh+'</option>'; }).join(''); }
-
+function popSel(id){ document.getElementById(id).innerHTML=COACHES.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join(''); }
 function renderSchGrid(){
   var wrap=document.getElementById('sch-wrap'), html='<table class="sch-t"><thead><tr><th class="nc">教練</th>';
   for(var d=1;d<=30;d++){ var dow=(FIRST6+d-1)%7,we=dow>=5; html+='<th class="'+(we?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>'; }
   html+='</tr></thead><tbody>';
   COACHES.forEach(function(c){
-    html+='<tr><td class="nc">'+c.name+'<br><small style="color:var(--text3);font-weight:400;">'+c.zh+'</small></td>';
+    html+='<tr><td class="nc">'+c.name+'</td>';
     for(var d=1;d<=30;d++){
       var dow=(FIRST6+d-1)%7,we=dow>=5,nj=c.joinDay&&d<c.joinDay,isOff=(sch[d]||[]).indexOf(c.name)>=0;
       html+='<td class="'+(we?'wed':'')+'"><div class="sc'+(isOff?' off':'')+'" '+(nj?'style="opacity:.15;cursor:default;" ':'onclick="toggle(\''+c.name+'\','+d+')" ')+' id="sc-'+c.name+'-'+d+'">'+(isOff?'休':'')+'</div></td>';
@@ -435,7 +495,6 @@ function renderSchGrid(){
   });
   wrap.innerHTML=html+'</tbody></table>';
 }
-
 function toggle(name,d){
   if(!sch[d]) sch[d]=[];
   var idx=sch[d].indexOf(name);
