@@ -256,8 +256,8 @@ table.dt tbody tr:hover td{background:var(--surface2);}
 
 <script>
 var API_URL = 'https://script.google.com/macros/s/AKfycbzK3I7EjPqTWOL8Lq46uBYD9ObZ--sAVMUI3zWVns5FezAiVQer7xaefOcdTm2CKbt7/exec';
-var WD6    = ['一','二','三','四','五','六','日'];
-var FIRST6 = new Date(2026,5,1).getDay();
+var WD6    = ['日','一','二','三','四','五','六']; // 0=日,1=一,...
+var FIRST6 = new Date(2026,5,1).getDay(); // 6/1=週一=1
 var MAY = {Peggy:458556,Trevor:342456,Manson:341064,Jim:314952,Kenny:243648,Alan:230904,Jon:193904,Eason:136848,Ian:130992,Parker:76224,Shawn:75624,Ann:0};
 var COACHES = [
   {name:'Peggy'},{name:'Trevor'},{name:'Manson'},{name:'Jim'},
@@ -417,7 +417,7 @@ function buildPicker(){
   var el=document.getElementById('dp'); el.innerHTML='';
   var today=new Date();
   for(var d=1;d<=30;d++){
-    var dow=(FIRST6+d-1)%7,isWe=dow>=5,off=(sch[d]||[]).length;
+    var dow=new Date(2026,5,d).getDay(),isWe=dow===0||dow===6,off=(sch[d]||[]).length;
     var isToday=today.getMonth()===5&&today.getFullYear()===2026&&today.getDate()===d;
     var btn=document.createElement('button');
     btn.className='db'+(d===selDay?' active':'')+(isToday?' today':'')+(off>0?' has-off':'')+(isWe?' we':'');
@@ -435,7 +435,7 @@ function buildPicker(){
 }
 function renderDay(d){
   var rank=getRank(d),on=rank.filter(function(c){ return !c.isOff; }),off=rank.filter(function(c){ return c.isOff; });
-  var isD1=d===1,dow=WD6[(FIRST6+d-1)%7],top=on[0];
+  var isD1=d===1,dow=WD6[new Date(2026,5,d).getDay()],top=on[0];
   document.getElementById('mbadge').textContent=isD1?'依5月業績排序':'依6月累計排序';
   document.getElementById('mbadge').className='mbadge '+(isD1?'m-may':'m-jun');
   document.getElementById('rdt').innerHTML='6月'+d+'日（週'+dow+'）<small>'+(isD1?'以5月累計為基準':'依本月累計即時排序')+'</small>';
@@ -515,12 +515,12 @@ function renderScore(){
 function popSel(id){ document.getElementById(id).innerHTML=COACHES.map(function(c){ return '<option value="'+c.name+'">'+c.name+'</option>'; }).join(''); }
 function renderSchGrid(){
   var wrap=document.getElementById('sch-wrap'),html='<table class="sch-t"><thead><tr><th class="nc">教練</th>';
-  for(var d=1;d<=30;d++){ var dow=(FIRST6+d-1)%7,we=dow>=5; html+='<th class="'+(we?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>'; }
+  for(var d=1;d<=30;d++){ var dow=new Date(2026,5,d).getDay(),we=dow===0||dow===6; html+='<th class="'+(we?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>'; }
   html+='</tr></thead><tbody>';
   COACHES.forEach(function(c){
     html+='<tr><td class="nc">'+c.name+'</td>';
     for(var d=1;d<=30;d++){
-      var dow=(FIRST6+d-1)%7,we=dow>=5,nj=c.joinDay&&d<c.joinDay,isOff=(sch[d]||[]).indexOf(c.name)>=0;
+      var dow=new Date(2026,5,d).getDay(),we=dow===0||dow===6,nj=c.joinDay&&d<c.joinDay,isOff=(sch[d]||[]).indexOf(c.name)>=0;
       html+='<td class="'+(we?'wed':'')+'"><div class="sc'+(isOff?' off':'')+'" '+(nj?'style="opacity:.15;cursor:default;" ':'onclick="toggle(\''+c.name+'\','+d+')" ')+' id="sc-'+c.name+'-'+d+'">'+(isOff?'休':'')+'</div></td>';
     }
     html+='</tr>';
