@@ -484,7 +484,11 @@ function getRank(day){
   return COACHES
     .filter(function(c){ return !(c.joinDay&&day<c.joinDay); })
     .map(function(c){ return {name:c.name,score:getScore(c.name),src:getScoreSrc(c.name),isOff:(sch[day]||[]).indexOf(c.name)>=0,total:getTotal(c.name)}; })
-    .sort(function(a,b){ if(a.total!==b.total) return a.total-b.total; return b.score-a.score; });
+    .sort(function(a,b){
+      if(a.total!==b.total) return a.total-b.total;
+      if(a.src!==b.src) return a.src==='jul' ? -1 : 1;
+      return b.score-a.score;
+    });
 }
 function buildPicker(){
   var el=document.getElementById('dp'); el.innerHTML='';
