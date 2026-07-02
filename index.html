@@ -477,11 +477,13 @@ function nav(p){
 }
 
 // ── RANK ──
-function getScore(name,day){ return day===1?(JUN[name]||0):(julS[name]||0); }
+function hasJulData(){ return Object.keys(julS).some(function(k){ return (julS[k]||0)>0; }); }
+function getScoreSrc(name){ return (julS[name]||0)>0 ? 'jul' : 'jun'; }
+function getScore(name){ return (julS[name]||0)>0 ? julS[name] : (JUN[name]||0); }
 function getRank(day){
   return COACHES
     .filter(function(c){ return !(c.joinDay&&day<c.joinDay); })
-    .map(function(c){ return {name:c.name,score:getScore(c.name,day),isOff:(sch[day]||[]).indexOf(c.name)>=0,total:getTotal(c.name)}; })
+    .map(function(c){ return {name:c.name,score:getScore(c.name),src:getScoreSrc(c.name),isOff:(sch[day]||[]).indexOf(c.name)>=0,total:getTotal(c.name)}; })
     .sort(function(a,b){ if(a.total!==b.total) return a.total-b.total; return b.score-a.score; });
 }
 function buildPicker(){
@@ -506,10 +508,10 @@ function buildPicker(){
 }
 function renderDay(d){
   var rank=getRank(d),on=rank.filter(function(c){return !c.isOff;}),off=rank.filter(function(c){return c.isOff;});
-  var isD1=d===1,dow=WD6[new Date(2026,6,d).getDay()],top=on[0];
-  document.getElementById('mbadge').textContent=isD1?'依6月業績':'依7月累計';
-  document.getElementById('mbadge').className='mbadge '+(isD1?'m-base':'m-live');
-  document.getElementById('rdt').innerHTML='7月'+d+'日（週'+dow+'）<small>'+(isD1?'以6月業績為基準':'依7月業績即時排序')+'</small>';
+  var allJun=!hasJulData(),dow=WD6[new Date(2026,6,d).getDay()],top=on[0];
+  document.getElementById('mbadge').textContent=allJun?'依6月業績':'依7月業績';
+  document.getElementById('mbadge').className='mbadge '+(allJun?'m-base':'m-live');
+  document.getElementById('rdt').innerHTML='7月'+d+'日（週'+dow+'）<small>'+(allJun?'尚無7月業績，以6月最終業績為基準':'依7月業績即時排序（未有7月業績者以6月最終業績排序）')+'</small>';
   document.getElementById('stats').innerHTML=
     '<div class="stat"><div class="lbl">今日出勤</div><div class="val">'+on.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
     '<div class="stat"><div class="lbl">今日休假</div><div class="val">'+off.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
@@ -523,7 +525,7 @@ function renderDay(d){
     var row=document.createElement('div'); row.className='rrow'+gc;
     row.innerHTML=
       '<div class="rb'+bc+'">'+medal+'</div>'+
-      '<div><div class="rn">'+c.name+'</div><div class="rsub">'+(isD1?'6月':'7月')+' '+c.score.toLocaleString()+'元</div></div>'+
+      '<div><div class="rn">'+c.name+'</div><div class="rsub">'+(c.src==='jul'?'7月':'6月')+' '+c.score.toLocaleString()+'元</div></div>'+
       '<div class="wi-wrap"><div class="wi-lbl">今日接待</div>'+
         '<div class="wi-ctrl">'+
           '<button class="wi-btn" onclick="changeWI('+d+',\''+c.name+'\',-1)">−</button>'+
