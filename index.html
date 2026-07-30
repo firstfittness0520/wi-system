@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>初練 WI 接待順位系統 2026年7月</title>
+<title>初練 WI 接待順位系統 2026年8月</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -56,8 +56,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .stat .val.sm{font-size:14px;font-weight:600;margin-top:3px;}
 .stat .sub{font-size:10px;color:var(--text3);margin-top:2px;}
 .mbadge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;}
-.m-base{background:var(--silver-bg);color:var(--silver);border:1px solid var(--silver-bd);}
-.m-live{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.m-prev{background:var(--silver-bg);color:var(--silver);border:1px solid var(--silver-bd);}
+.m-cur{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
 .dp{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1.125rem;}
 .db{width:39px;height:45px;border:1px solid var(--border2);border-radius:var(--rsm);background:var(--surface);color:var(--text);cursor:pointer;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;position:relative;transition:all .1s;}
 .db .wd{font-size:9px;color:var(--text3);font-weight:400;}
@@ -166,7 +166,7 @@ table.dt tbody tr:hover td{background:var(--surface2);}
   </div>
   <div class="nav-right">
     <span class="chip chip-live" id="clive" style="display:none;"><span class="pulse"></span>即時</span>
-    <span class="chip chip-ver">2026年7月</span>
+    <span class="chip chip-ver">2026年8月</span>
     <span class="chip chip-date" id="nav-date">—</span>
   </div>
 </nav>
@@ -178,7 +178,7 @@ table.dt tbody tr:hover td{background:var(--surface2);}
   <div class="card">
     <div class="card-hd">
       <div class="card-title">📅 日期選擇</div>
-      <span class="mbadge m-base" id="mbadge">依6月業績</span>
+      <span class="mbadge m-prev" id="mbadge">依7月業績</span>
     </div>
     <div class="legend">
       <span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--red);margin-right:3px;vertical-align:middle;"></span>當日有人休假</span>
@@ -205,7 +205,7 @@ table.dt tbody tr:hover td{background:var(--surface2);}
   <div id="score-st"></div>
   <div class="card">
     <div class="card-hd">
-      <div class="card-title">📋 7月業績（Google Sheets 即時）</div>
+      <div class="card-title">📋 8月業績（Google Sheets 即時）</div>
       <button class="btn btn-g btn-sm" onclick="fetchScores()">🔄 重新整理</button>
     </div>
     <div style="overflow-x:auto;">
@@ -216,12 +216,12 @@ table.dt tbody tr:hover td{background:var(--surface2);}
     </div>
   </div>
   <div class="card">
-    <div class="card-title" style="margin-bottom:.875rem;">📊 7月累計業績排名</div>
-    <table class="dt"><thead><tr><th>#</th><th>教練</th><th>7月累計</th><th>6月基準</th></tr></thead><tbody id="sum-body"></tbody></table>
+    <div class="card-title" style="margin-bottom:.875rem;">📊 8月累計業績排名</div>
+    <table class="dt"><thead><tr><th>#</th><th>教練</th><th>8月累計</th><th>7月基準</th></tr></thead><tbody id="sum-body"></tbody></table>
   </div>
   <div class="card">
-    <div class="card-title" style="margin-bottom:.875rem;">📌 6月基準業績</div>
-    <table class="dt"><thead><tr><th>#</th><th>教練</th><th>6月累計</th></tr></thead><tbody id="may-body"></tbody></table>
+    <div class="card-title" style="margin-bottom:.875rem;">📌 7月最終業績（8/1排序依據）</div>
+    <table class="dt"><thead><tr><th>#</th><th>教練</th><th>7月累計</th></tr></thead><tbody id="prev-body"></tbody></table>
   </div>
 </div>
 
@@ -230,7 +230,7 @@ table.dt tbody tr:hover td{background:var(--surface2);}
   <div class="alert alert-ok" id="sch-alert">✅ 休假已儲存並同步到所有裝置</div>
   <div class="card">
     <div class="card-hd">
-      <div class="card-title">📅 7月休假設定</div>
+      <div class="card-title">📅 8月休假設定</div>
       <div class="brow">
         <button class="btn btn-g btn-sm" onclick="fetchSch()">🔄 從雲端讀取</button>
         <button class="btn btn-p btn-sm" onclick="saveSch()">💾 儲存並同步</button>
@@ -259,47 +259,57 @@ table.dt tbody tr:hover td{background:var(--surface2);}
 
 <script>
 var API = 'https://script.google.com/macros/s/AKfycbzK3I7EjPqTWOL8Lq46uBYD9ObZ--sAVMUI3zWVns5FezAiVQer7xaefOcdTm2CKbt7/exec';
+var MONTH = 8; // 8月
+var DAYS  = 31; // 8月有31天
+var YEAR  = 2026;
 var WD6 = ['日','一','二','三','四','五','六'];
-// JUN = 6月業績（本月排序的基準值，來源：6月業績結算表，已排除RURU）
-var JUN = {Alan:228072,Ian:223872,Ann:175104,Jon:131592,Eason:129792,Kenny:116736,Peggy:91680,Jim:78624,Shawn:76224,Trevor:58368,Manson:20256,Kuma:0};
-var COACHES = [
-  {name:'Kenny'},{name:'Alan'},{name:'Eason'},{name:'Jim'},
-  {name:'Jon'},{name:'Shawn'},{name:'Trevor'},{name:'Ian'},
-  {name:'Manson'},{name:'Peggy'},{name:'Ann'},{name:'Kuma',joinDay:6}
-];
-// 預設休假（首次載入用，之後從 Sheets 同步）－依7月休假表
-var DEF_OFF = {
-  Kenny: [5,6,12,13,19,20,26,27],
-  Alan:  [4,5,10,12,17,18,25,26],
-  Eason: [1,4,5,11,12,18,19,25],
-  Jim:   [3,10,11,17,18,24,25,31],
-  Jon:   [3,4,11,12,17,18,25,26],
-  Shawn: [5,10,11,17,18,24,26,27],
-  Trevor:[4,7,11,12,18,19,23,27],
-  Ian:   [3,4,11,12,18,19,25,31],
-  Manson:[2,3,6,9,13,16,20,23,27,30],
-  Peggy: [4,5,11,12,18,19,25,26],
-  Ann:   [5,11,12,16,19,23,25,26],
-  Kuma:  [10,11,12,19,26,31]
+
+// 7月最終業績（8/1排序基準）
+var PREV = {
+  Ann:381120, Kuma:359064, Alan:261384, Ian:242928,
+  Kenny:229872, Peggy:175704, Manson:162504, Shawn:114336,
+  Jon:109536, Eason:91680, Jim:72624, Trevor:60768
 };
 
-var sch={};        // {day:[names]}
-var julE=[],julS={},lastSync=null;
-var todayWI={};    // {date_name:count}
-var totalWI={};    // {name:count}
-var selDay=(function(){ var t=new Date(); return (t.getMonth()===6&&t.getFullYear()===2026)?t.getDate():1; })();
+var COACHES = [
+  {name:'Ann'   },{name:'Kuma'  },{name:'Alan'  },{name:'Ian'   },
+  {name:'Kenny' },{name:'Peggy' },{name:'Manson'},{name:'Shawn' },
+  {name:'Jon'   },{name:'Eason' },{name:'Jim'   },{name:'Trevor'}
+];
 
-// ── SCH 初始化 ──
+// 8月預設休假
+var DEF_OFF = {
+  Kenny:  [2,3,9,10,16,17,18,21,24,30],
+  Alan:   [1,2,6,10,11,15,16,21,24,30],
+  Eason:  [1,7,8,9,14,15,21,24,30,31],
+  Jim:    [2,3,8,10,11,15,21,27,28,29],
+  Jon:    [1,2,3,9,10,16,17,24,25,29],
+  Shawn:  [2,7,8,9,16,17,20,27,28,29],
+  Trevor: [2,3,8,9,15,16,20,27,28,29],
+  Ian:    [1,2,7,14,15,16,21,24,25,30],
+  Manson: [3,6,7,9,13,14,20,21,27,29],
+  Peggy:  [1,2,8,9,15,16,21,24,29,30],
+  Ann:    [1,4,5,6,7,8,15,20,25,30],
+  Kuma:   [1,8,12,13,14,15,16,20,25,31]
+};
+
+var sch={}, junE=[], junS={}, lastSync=null;
+var todayWI={}, totalWI={};
+var selDay=(function(){
+  var t=new Date();
+  return (t.getMonth()+1===MONTH&&t.getFullYear()===YEAR)?t.getDate():1;
+})();
+
 function buildDef(){
   sch={};
-  for(var d=1;d<=31;d++) sch[d]=[];
+  for(var d=1;d<=DAYS;d++) sch[d]=[];
   Object.keys(DEF_OFF).forEach(function(n){
     DEF_OFF[n].forEach(function(d){ if(sch[d].indexOf(n)<0) sch[d].push(n); });
   });
 }
 function applySchFromAPI(schedule){
   sch={};
-  for(var d=1;d<=31;d++) sch[d]=[];
+  for(var d=1;d<=DAYS;d++) sch[d]=[];
   Object.keys(schedule).forEach(function(name){
     (schedule[name]||[]).forEach(function(d){
       if(!sch[d]) sch[d]=[];
@@ -308,48 +318,45 @@ function applySchFromAPI(schedule){
   });
 }
 
+// 日期字串 "08/01"
+function dstr(day){ return String(MONTH).padStart(2,'0')+'/'+String(day).padStart(2,'0'); }
+function wiKey(day,name){ return dstr(day)+'_'+name; }
+function getTodayWI(day,name){ return todayWI[wiKey(day,name)]||0; }
+function getTotal(name){ return totalWI[name]||0; }
+function enc(s){ return encodeURIComponent(s); }
+
 // ── API: 休假 ──
 function fetchSch(){
   document.getElementById('sch-sync-info').textContent='從雲端讀取中...';
   fetch(API+'?action=getSch')
     .then(function(r){return r.json();})
     .then(function(j){
-      if(j.ok && j.schedule && Object.keys(j.schedule).length>0){
+      if(j.ok&&j.schedule&&Object.keys(j.schedule).length>0){
         applySchFromAPI(j.schedule);
         document.getElementById('sch-sync-info').textContent='✅ 已從雲端讀取 '+new Date().toLocaleTimeString('zh-TW');
       } else {
         buildDef();
         document.getElementById('sch-sync-info').textContent='使用預設班表（雲端尚無資料）';
       }
-      buildPicker();
-      renderDay(selDay);
+      buildPicker(); renderDay(selDay);
       if(document.getElementById('page-schedule').classList.contains('active')) renderSchGrid();
     })
-    .catch(function(){
-      buildDef();
-      document.getElementById('sch-sync-info').textContent='⚠ 讀取失敗，使用預設班表';
-      buildPicker(); renderDay(selDay);
-    });
+    .catch(function(){ buildDef(); buildPicker(); renderDay(selDay); });
 }
-
 function saveSch(){
-  // 把每位教練的休假日存到 Sheets
-  var coaches = COACHES.map(function(c){return c.name;});
-  var promises = coaches.map(function(name){
+  var coaches=COACHES.map(function(c){return c.name;});
+  Promise.all(coaches.map(function(name){
     var days=[];
-    for(var d=1;d<=31;d++){ if((sch[d]||[]).indexOf(name)>=0) days.push(d); }
+    for(var d=1;d<=DAYS;d++){ if((sch[d]||[]).indexOf(name)>=0) days.push(d); }
     return fetch(API+'?action=setSch&coach='+enc(name)+'&days='+enc(days.join(',')));
+  })).then(function(){
+    buildPicker(); renderDay(selDay);
+    var al=document.getElementById('sch-alert'); al.classList.add('show');
+    setTimeout(function(){ al.classList.remove('show'); },3000);
+    document.getElementById('sch-sync-info').textContent='✅ 已同步到所有裝置 '+new Date().toLocaleTimeString('zh-TW');
+  }).catch(function(){
+    document.getElementById('sch-sync-info').textContent='⚠ 部分儲存失敗，請重試';
   });
-  Promise.all(promises)
-    .then(function(){
-      buildPicker(); renderDay(selDay);
-      var al=document.getElementById('sch-alert'); al.classList.add('show');
-      setTimeout(function(){ al.classList.remove('show'); },3000);
-      document.getElementById('sch-sync-info').textContent='✅ 已同步到所有裝置 '+new Date().toLocaleTimeString('zh-TW');
-    })
-    .catch(function(){
-      document.getElementById('sch-sync-info').textContent='⚠ 部分儲存失敗，請重試';
-    });
 }
 
 // ── API: 今日接待 ──
@@ -358,7 +365,7 @@ function fetchTodayWI(day){
   fetch(API+'?action=getWI&date='+enc(dstr(day)))
     .then(function(r){return r.json();})
     .then(function(j){
-      if(j.ok && j.counts){
+      if(j.ok&&j.counts){
         Object.keys(j.counts).forEach(function(n){ todayWI[wiKey(day,n)]=j.counts[n]||0; });
         refreshWIDisplay(day);
       }
@@ -368,7 +375,7 @@ function fetchTodayWI(day){
 }
 function saveTodayWI(day,name,count){
   todayWI[wiKey(day,name)]=count;
-  updEl('wi-num-'+name, count, 'wi-num', count>0, 'saving');
+  updEl('wi-num-'+name,count,'wi-num',count>0,'saving');
   fetch(API+'?action=setWI&date='+enc(dstr(day))+'&coach='+enc(name)+'&count='+count)
     .then(function(){ var e=document.getElementById('wi-num-'+name); if(e) e.classList.remove('saving'); })
     .catch(function(){ var e=document.getElementById('wi-num-'+name); if(e) e.classList.remove('saving'); });
@@ -379,42 +386,32 @@ function fetchTotal(){
   fetch(API+'?action=getTotal')
     .then(function(r){return r.json();})
     .then(function(j){
-      if(j.ok && j.totals){
+      if(j.ok&&j.totals){
         Object.keys(j.totals).forEach(function(n){ totalWI[n]=j.totals[n]||0; });
-        refreshTotalDisplay();
-        renderDay(selDay);
+        refreshTotalDisplay(); renderDay(selDay);
       }
     }).catch(function(){});
 }
 function saveTotal(name,count){
   totalWI[name]=count;
-  updEl('tot-num-'+name, count, 'tot-num', count>0);
+  updEl('tot-num-'+name,count,'tot-num',count>0);
   fetch(API+'?action=setTotal&coach='+enc(name)+'&count='+count).catch(function(){});
 }
-
-// 按＋ → 今日+1，累計+1；按− → 今日-1，累計-1
 function changeWI(day,name,delta){
   var newT=Math.max(0,getTodayWI(day,name)+delta);
   var newTot=Math.max(0,getTotal(name)+delta);
   saveTodayWI(day,name,newT);
   saveTotal(name,newTot);
-  renderDay(selDay); // 重新排序
+  renderDay(selDay);
 }
-
 function refreshWIDisplay(day){
-  COACHES.forEach(function(c){
-    var v=getTodayWI(day,c.name);
-    updEl('wi-num-'+c.name,v,'wi-num',v>0);
-  });
+  COACHES.forEach(function(c){ var v=getTodayWI(day,c.name); updEl('wi-num-'+c.name,v,'wi-num',v>0); });
 }
 function refreshTotalDisplay(){
-  COACHES.forEach(function(c){
-    var v=getTotal(c.name);
-    updEl('tot-num-'+c.name,v,'tot-num',v>0);
-  });
+  COACHES.forEach(function(c){ var v=getTotal(c.name); updEl('tot-num-'+c.name,v,'tot-num',v>0); });
 }
 function resetTodayWI(){
-  if(!confirm('確定重置 7/'+selDay+' 所有教練的今日接待數？')) return;
+  if(!confirm('確定重置 '+MONTH+'/'+selDay+' 所有教練的今日接待數？')) return;
   COACHES.forEach(function(c){ saveTodayWI(selDay,c.name,0); });
 }
 function resetAllTotal(){
@@ -432,11 +429,11 @@ function fetchScores(){
     .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
     .then(function(j){
       if(!j.ok) throw new Error('API錯誤');
-      julE=j.entries||[]; julS=j.scores||{};
+      junE=j.entries||[]; junS=j.scores||{};
       lastSync=new Date(); showLB(false);
-      var total=Object.keys(julS).reduce(function(s,k){return s+(julS[k]||0);},0);
-      setSt('rank-st','ok','✅ 業績已同步｜7月 '+julE.length+' 筆，合計 '+total.toLocaleString()+' 元');
-      setSt('score-st','ok','✅ 已讀取 '+julE.length+' 筆7月業績');
+      var total=Object.keys(junS).reduce(function(s,k){return s+(junS[k]||0);},0);
+      setSt('rank-st','ok','✅ 業績已同步｜8月 '+junE.length+' 筆，合計 '+total.toLocaleString()+' 元');
+      setSt('score-st','ok','✅ 已讀取 '+junE.length+' 筆8月業績');
       document.getElementById('clive').style.display='flex';
       document.getElementById('sinfo').innerHTML=
         '🕐 最後同步：'+lastSync.toLocaleTimeString('zh-TW')+
@@ -451,11 +448,6 @@ function fetchScores(){
 }
 
 // ── HELPERS ──
-function dstr(day){ return '07/'+String(day).padStart(2,'0'); }
-function wiKey(day,name){ return dstr(day)+'_'+name; }
-function getTodayWI(day,name){ return todayWI[wiKey(day,name)]||0; }
-function getTotal(name){ return totalWI[name]||0; }
-function enc(s){ return encodeURIComponent(s); }
 function showLB(on){ document.getElementById('lb').classList.toggle('show',on); }
 function setSt(id,type,msg){ var el=document.getElementById(id); if(!el) return; el.innerHTML='<div class="st-bar st-'+type+'">'+msg+'</div>'; }
 function setDot(cls){ var el=document.getElementById('wi-dot'); if(el) el.className='wi-dot'+(cls?' '+cls:''); }
@@ -477,25 +469,21 @@ function nav(p){
 }
 
 // ── RANK ──
-function hasJulData(){ return Object.keys(julS).some(function(k){ return (julS[k]||0)>0; }); }
-function getScoreSrc(name){ return (julS[name]||0)>0 ? 'jul' : 'jun'; }
-function getScore(name){ return (julS[name]||0)>0 ? julS[name] : (JUN[name]||0); }
+function getScore(name,day){
+  return day===1?(PREV[name]||0):(junS[name]||0);
+}
 function getRank(day){
   return COACHES
-    .filter(function(c){ return !(c.joinDay&&day<c.joinDay); })
-    .map(function(c){ return {name:c.name,score:getScore(c.name),src:getScoreSrc(c.name),isOff:(sch[day]||[]).indexOf(c.name)>=0,total:getTotal(c.name)}; })
-    .sort(function(a,b){
-      if(a.total!==b.total) return a.total-b.total;
-      if(a.src!==b.src) return a.src==='jul' ? -1 : 1;
-      return b.score-a.score;
-    });
+    .filter(function(c){ return true; })
+    .map(function(c){ return {name:c.name,score:getScore(c.name,day),isOff:(sch[day]||[]).indexOf(c.name)>=0,total:getTotal(c.name)}; })
+    .sort(function(a,b){ if(a.total!==b.total) return a.total-b.total; return b.score-a.score; });
 }
 function buildPicker(){
   var el=document.getElementById('dp'); el.innerHTML='';
   var today=new Date();
-  for(var d=1;d<=31;d++){
-    var dow=new Date(2026,6,d).getDay(),isWe=dow===0||dow===6,off=(sch[d]||[]).length;
-    var isToday=today.getMonth()===6&&today.getFullYear()===2026&&today.getDate()===d;
+  for(var d=1;d<=DAYS;d++){
+    var dow=new Date(YEAR,MONTH-1,d).getDay(),isWe=dow===0||dow===6,off=(sch[d]||[]).length;
+    var isToday=today.getMonth()+1===MONTH&&today.getFullYear()===YEAR&&today.getDate()===d;
     var btn=document.createElement('button');
     btn.className='db'+(d===selDay?' active':'')+(isToday?' today':'')+(off>0?' has-off':'')+(isWe?' we':'');
     btn.innerHTML='<span class="wd">'+WD6[dow]+'</span>'+d;
@@ -512,10 +500,10 @@ function buildPicker(){
 }
 function renderDay(d){
   var rank=getRank(d),on=rank.filter(function(c){return !c.isOff;}),off=rank.filter(function(c){return c.isOff;});
-  var allJun=!hasJulData(),dow=WD6[new Date(2026,6,d).getDay()],top=on[0];
-  document.getElementById('mbadge').textContent=allJun?'依6月業績':'依7月業績';
-  document.getElementById('mbadge').className='mbadge '+(allJun?'m-base':'m-live');
-  document.getElementById('rdt').innerHTML='7月'+d+'日（週'+dow+'）<small>'+(allJun?'尚無7月業績，以6月最終業績為基準':'依7月業績即時排序（未有7月業績者以6月最終業績排序）')+'</small>';
+  var isD1=d===1,dow=WD6[new Date(YEAR,MONTH-1,d).getDay()],top=on[0];
+  document.getElementById('mbadge').textContent=isD1?'依7月業績':'依8月累計';
+  document.getElementById('mbadge').className='mbadge '+(isD1?'m-prev':'m-cur');
+  document.getElementById('rdt').innerHTML=MONTH+'月'+d+'日（週'+dow+'）<small>'+(isD1?'以7月業績為基準':'依8月業績即時排序')+'</small>';
   document.getElementById('stats').innerHTML=
     '<div class="stat"><div class="lbl">今日出勤</div><div class="val">'+on.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
     '<div class="stat"><div class="lbl">今日休假</div><div class="val">'+off.length+'<span style="font-size:14px;font-weight:400;color:var(--text3);"> 人</span></div></div>'+
@@ -529,7 +517,7 @@ function renderDay(d){
     var row=document.createElement('div'); row.className='rrow'+gc;
     row.innerHTML=
       '<div class="rb'+bc+'">'+medal+'</div>'+
-      '<div><div class="rn">'+c.name+'</div><div class="rsub">'+(c.src==='jul'?'7月':'6月')+' '+c.score.toLocaleString()+'元</div></div>'+
+      '<div><div class="rn">'+c.name+'</div><div class="rsub">'+(isD1?'7月':'8月')+' '+c.score.toLocaleString()+'元</div></div>'+
       '<div class="wi-wrap"><div class="wi-lbl">今日接待</div>'+
         '<div class="wi-ctrl">'+
           '<button class="wi-btn" onclick="changeWI('+d+',\''+c.name+'\',-1)">−</button>'+
@@ -555,12 +543,12 @@ function renderDay(d){
 // ── SCORE ──
 function renderScore(){
   var tb=document.getElementById('score-body'); tb.innerHTML='';
-  if(!julE.length){
-    tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:2rem;">尚無7月業績 / 讀取中</td></tr>';
+  if(!junE.length){
+    tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:2rem;">尚無8月業績 / 讀取中</td></tr>';
   } else {
-    julE.forEach(function(e){
+    junE.forEach(function(e){
       var tr=document.createElement('tr');
-      tr.innerHTML='<td style="font-family:\'DM Mono\',monospace;font-size:12px;">6/'+e.day+'</td>'+
+      tr.innerHTML='<td style="font-family:\'DM Mono\',monospace;font-size:12px;">8/'+e.day+'</td>'+
         '<td><strong>'+e.coach+'</strong></td>'+
         '<td style="color:var(--text3);font-size:12px;">'+(e.member||'—')+'</td>'+
         '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+e.amount.toLocaleString()+'</td>';
@@ -568,23 +556,22 @@ function renderScore(){
     });
   }
   var sb=document.getElementById('sum-body'); sb.innerHTML='';
-  COACHES.map(function(c){return{name:c.name,jul:julS[c.name]||0,jun:JUN[c.name]||0};})
-    .sort(function(a,b){return b.jul-a.jul;})
+  COACHES.map(function(c){return{name:c.name,cur:junS[c.name]||0,prev:PREV[c.name]||0};})
+    .sort(function(a,b){return b.cur-a.cur;})
     .forEach(function(c,i){
       var tr=document.createElement('tr');
       tr.innerHTML='<td><strong>'+(i+1)+'</strong></td><td><strong>'+c.name+'</strong></td>'+
-        '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+c.jul.toLocaleString()+' <small style="color:var(--text3);">元</small></td>'+
-        '<td style="font-family:\'DM Mono\',monospace;color:var(--text3);">'+c.jun.toLocaleString()+'</td>';
+        '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+c.cur.toLocaleString()+' <small style="color:var(--text3);">元</small></td>'+
+        '<td style="font-family:\'DM Mono\',monospace;color:var(--text3);">'+c.prev.toLocaleString()+'</td>';
       sb.appendChild(tr);
     });
-  var mb=document.getElementById('may-body'); mb.innerHTML='';
-  COACHES.filter(function(c){return JUN[c.name]>0;})
-    .sort(function(a,b){return(JUN[b.name]||0)-(JUN[a.name]||0);})
+  var pb=document.getElementById('prev-body'); pb.innerHTML='';
+  COACHES.slice().sort(function(a,b){return (PREV[b.name]||0)-(PREV[a.name]||0);})
     .forEach(function(c,i){
       var tr=document.createElement('tr');
       tr.innerHTML='<td><strong>'+(i+1)+'</strong></td><td><strong>'+c.name+'</strong></td>'+
-        '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+(JUN[c.name]||0).toLocaleString()+' <small style="color:var(--text3);">元</small></td>';
-      mb.appendChild(tr);
+        '<td style="font-family:\'DM Mono\',monospace;font-weight:600;">'+(PREV[c.name]||0).toLocaleString()+' <small style="color:var(--text3);">元</small></td>';
+      pb.appendChild(tr);
     });
 }
 
@@ -592,13 +579,13 @@ function renderScore(){
 function popSel(id){ document.getElementById(id).innerHTML=COACHES.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join(''); }
 function renderSchGrid(){
   var wrap=document.getElementById('sch-wrap'),html='<table class="sch-t"><thead><tr><th class="nc">教練</th>';
-  for(var d=1;d<=31;d++){var dow=new Date(2026,6,d).getDay(),we=dow===0||dow===6; html+='<th class="'+(we?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>';}
+  for(var d=1;d<=DAYS;d++){var dow=new Date(YEAR,MONTH-1,d).getDay(),we=dow===0||dow===6; html+='<th class="'+(we?'weh':'')+'"><div style="font-size:9px;font-weight:400;">'+WD6[dow]+'</div>'+d+'</th>';}
   html+='</tr></thead><tbody>';
   COACHES.forEach(function(c){
     html+='<tr><td class="nc">'+c.name+'</td>';
-    for(var d=1;d<=31;d++){
-      var dow=new Date(2026,6,d).getDay(),we=dow===0||dow===6,nj=c.joinDay&&d<c.joinDay,isOff=(sch[d]||[]).indexOf(c.name)>=0;
-      html+='<td class="'+(we?'wed':'')+'"><div class="sc'+(isOff?' off':'')+'" '+(nj?'style="opacity:.15;cursor:default;" ':'onclick="toggle(\''+c.name+'\','+d+')" ')+' id="sc-'+c.name+'-'+d+'">'+(isOff?'休':'')+'</div></td>';
+    for(var d=1;d<=DAYS;d++){
+      var dow=new Date(YEAR,MONTH-1,d).getDay(),we=dow===0||dow===6,isOff=(sch[d]||[]).indexOf(c.name)>=0;
+      html+='<td class="'+(we?'wed':'')+'"><div class="sc'+(isOff?' off':'')+'" onclick="toggle(\''+c.name+'\','+d+')" id="sc-'+c.name+'-'+d+'">'+(isOff?'休':'')+'</div></td>';
     }
     html+='</tr>';
   });
@@ -615,13 +602,13 @@ function batchSet(){
   var n=document.getElementById('b-coach').value;
   document.getElementById('b-days').value.split(',').forEach(function(s){
     var d=parseInt(s.trim());
-    if(d>=1&&d<=31){if(!sch[d])sch[d]=[];if(sch[d].indexOf(n)<0)sch[d].push(n);}
+    if(d>=1&&d<=DAYS){if(!sch[d])sch[d]=[];if(sch[d].indexOf(n)<0)sch[d].push(n);}
   });
   document.getElementById('b-days').value=''; renderSchGrid();
 }
 function batchClr(){
   var n=document.getElementById('b-coach').value;
-  for(var d=1;d<=31;d++) if(sch[d]) sch[d]=sch[d].filter(function(x){return x!==n;});
+  for(var d=1;d<=DAYS;d++) if(sch[d]) sch[d]=sch[d].filter(function(x){return x!==n;});
   renderSchGrid();
 }
 
@@ -630,17 +617,15 @@ function init(){
   var now=new Date();
   document.getElementById('nav-date').textContent=now.getFullYear()+'/'+String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
   popSel('b-coach');
-  buildDef(); // 先用預設
+  buildDef();
   buildPicker();
   renderDay(selDay);
-  // 從雲端載入所有資料
   fetchSch();
   fetchScores();
   fetchTodayWI(selDay);
   fetchTotal();
-  // 定時更新
-  setInterval(fetchScores, 5*60*1000);
-  setInterval(function(){ fetchTodayWI(selDay); fetchTotal(); fetchSch(); }, 30*1000);
+  setInterval(fetchScores,5*60*1000);
+  setInterval(function(){ fetchTodayWI(selDay); fetchTotal(); fetchSch(); },30*1000);
 }
 init();
 </script>
